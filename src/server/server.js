@@ -9,6 +9,8 @@ var io = require('socket.io')(http);
 
 mongoose.connect('mongodb://localhost/bibbot');
 
+import rules from './rules';
+
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/views/index.html');
 });
@@ -23,9 +25,11 @@ function startBot () {
     socket.on('chat message', function(msg){
       // Emit the message back first
       socket.emit('chat message', { text: ">> " + msg });
+      const response = rules(msg);
+      socket.emit('chat message', { text: "<< " + response});
       /*bot.reply(socket.id, msg.trim(), function(err, resObj){
         var color = resObj.color || "#fff";
-        socket.emit('chat message', { text: "<< " + resObj.string, color:color, picker: resObj.picker });
+
       });*/
     });
   });
