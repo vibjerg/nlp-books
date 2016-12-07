@@ -56,7 +56,7 @@
         var msg = msgObj.text;
         var color = msgObj.color;
         $('body').animate({backgroundColor: color})
-        $('#messages').append($('<li>').text(msg));
+        $('#messages').append($('<li>').html(msg));
 
         var newscrollHeight = $("#messageArea")[0].scrollHeight;
         if(newscrollHeight > oldscrollHeight){ 
