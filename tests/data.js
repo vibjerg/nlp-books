@@ -50,35 +50,39 @@ function loadLoans(cb) {
   });
 }
 
-function loadAuthorships(cb) {
+function loadMaterials(cb) {
   const authors = jsonfile.readFileSync('./data/authors.json');
-  const materials = jsonfile.readFileSync('./data/loans.json');
-  const materialIds = Object.keys(materials);
+  const loans = jsonfile.readFileSync('./data/loans.json');
+  const materialIds = Object.keys(loans);
 
-  const loans = {};
+  const materials = {};
   var count = 0;
-  var stream = fs.createReadStream('./data/udlaan.json', {encoding: 'utf8'});
+  var stream = fs.createReadStream('./data/materialedata.json', {encoding: 'utf8'});
   const parser = JSONStream.parse();
 
   stream.pipe(parser);
 
   parser.on('data', function (obj) {
     const id = obj.materiale_id;
-    loans[id] = loans[id] && loans[id] + 1 || 1;
-
+    if (obj.type === 'book' && loans[id]) {
+      materials[id] = {
+        title: obj.title,
+        creator: obj.creator && obj.creator.replace(/(\d|-|\(.*\))/g, '').trim() || null,
+        loans: loans[id]
+      };
+    }
     if (++count % 100000 === 0) {
-      console.log(count, Object.keys(loans).length);
+      console.log(count, Object.keys(materials).length); //595132
     }
   });
 
   parser.on('end', () => {
-    cb(loans);
+    cb(materials);
   });
 }
 
-
-
-loadLoans(data => jsonfile.writeFileSync('data/loans.json', data));
+//loadLoans(data => jsonfile.writeFileSync('data/loans.json', data));
+loadMaterials(data => jsonfile.writeFileSync('data/materials.json', data));
 //loadAuthors(data => jsonfile.writeFileSync('data/authors.json', data));
 
 function writeToFile(filename, data) {

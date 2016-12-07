@@ -1,4 +1,5 @@
-import spell from './spell';
+import {spell, authorForTitle} from './spell';
+import bestBy from './best';
 import openPlatform from './openplatform.client';
 import openSearch from './opensearch.client';
 
@@ -18,6 +19,18 @@ async function getTitlesForAuthor(author) {
   }) || [];
 }
 
+function getMostPopularByAuthor(msg, matches) {
+  const author = spellAuthor(msg, matches);
+  const material = bestBy(author);
+
+  if (material) {
+    return `<b>${material.title}</b> af <i>${author}</i> er populær`;
+  }
+  else {
+    return `Der er ikke nogen der gider læse ${author}`;
+  }
+
+}
 
 
 function match(msg) {
@@ -38,6 +51,12 @@ async function getAuthor(msg, matches) {
   return `${author} har f.eks. skrevet:<br />${titles.join('<br/>')}`;
 }
 
+function spellAuthor(msg, matches) {
+  const suggestions = spell(matches[1], 'author', 0.9);
+  const author = suggestions[0] || matches[1];
+  return author;
+}
+
 async function getNewestTitleForAuthor(msg, matches) {
   const suggestions = spell(matches[1]);
   const author = suggestions[0] || matches[1];
@@ -46,8 +65,8 @@ async function getNewestTitleForAuthor(msg, matches) {
 }
 
 function getAuthorForTitle(msg, matches) {
-
-  return `Bummelum har skrevet ${matches[1]}`;
+  const {author, title} = authorForTitle(matches[1]);
+  return `${author} har skrevet ${title}`;
 }
 
 function noMatch(msg) {
@@ -57,10 +76,10 @@ function noMatch(msg) {
 
 export default function callRules(msg) {
   for (const rule of rules) {
-    console.log(rule);
     for (const regex of rule.regex) {
       const matches = msg.match(regex);
       if (matches) {
+        console.log(rule);
         return rule.action(msg, matches);
       }
     }
@@ -68,6 +87,11 @@ export default function callRules(msg) {
 }
 
 const rules = [
+  {
+    regex: [/.*den bedste .* af (.*)/],
+    action: getMostPopularByAuthor,
+    description: 'Mest udlånte bog af forfatter',
+  },
   {
     regex: [/.* af (.*)/, /.* har (.*) lavet/, /.* har (.*) skrevet/],
     action: getAuthor,
@@ -84,8 +108,13 @@ const rules = [
     description: 'Nyeste bog af forfatter',
   },
   {
-    regex: [/.*/],
-    action: noMatch,
+    regex: [/stav til (.*)/],
+    action: spellAuthor,
+    description: 'Stavehjælp',
+  },
+  {
+    regex: [/(.*)/],
+    action: spellAuthor,
     description: 'Ingen match',
   }
 ];
