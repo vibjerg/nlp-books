@@ -47,7 +47,7 @@ function match(msg) {
 async function getAuthor(msg, matches) {
   const suggestions = spell(matches[1]);
   const author = suggestions[0] || matches[1];
-  const titles = await getTitlesForAuthor(matches[1]);
+  const titles = await getTitlesForAuthor(author);
   return `${author} har f.eks. skrevet:<br />${titles.join('<br/>')}`;
 }
 
@@ -60,7 +60,7 @@ function spellAuthor(msg, matches) {
 async function getNewestTitleForAuthor(msg, matches) {
   const suggestions = spell(matches[1]);
   const author = suggestions[0] || matches[1];
-  const titles = await getTitlesForAuthor(matches[1]);
+  const titles = await getTitlesForAuthor(author);
   return `${author}s nyeste bog hedder <b>${titles[0]}</b>`;
 }
 
@@ -93,6 +93,11 @@ const rules = [
     description: 'Mest udlånte bog af forfatter',
   },
   {
+    regex: [/.* den nyeste .*af (.*)/, /.* hedder (.*)s nyeste */, /.* er (.*)s nyeste/, /.* hedder (.*)s seneste/],
+    action: getNewestTitleForAuthor,
+    description: 'Nyeste bog af forfatter',
+  },
+  {
     regex: [/.* af (.*)/, /.* har (.*) lavet/, /.* har (.*) skrevet/],
     action: getAuthor,
     description: 'Noget af en given forfatter',
@@ -101,11 +106,6 @@ const rules = [
     regex: [/.* har skrevet (.*)/, /.* hvem er (.*) lavet af/, /.* er (.*) skrevet/],
     action: getAuthorForTitle,
     description: 'Forfatteren til en bog',
-  },
-  {
-    regex: [/.* den nyeste .* af (.*)/, /.* hedder (.*)s nyeste */, /.* er (.*)s nyeste/, /.* hedder (.*)s seneste/],
-    action: getNewestTitleForAuthor,
-    description: 'Nyeste bog af forfatter',
   },
   {
     regex: [/stav til (.*)/],
