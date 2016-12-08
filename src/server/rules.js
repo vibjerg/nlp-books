@@ -21,8 +21,19 @@ async function getTitlesForAuthor(author) {
   }) || [];
 }
 
-function getMostPopularByAuthor(msg, matches) {
-  const author = spellAuthor(msg, matches);
+function spellAuthor(match, context) {
+  const suggestions = spell(match, 'author', 0.9);
+  const author = suggestions[0] || match;
+  console.log(author);
+  context.author = author;
+  return author;
+}
+
+function howToSpellAuthor(msg, match, context) {
+  return spellAuthor(match, context);
+}
+function getMostPopularByAuthor(msg, match, context) {
+  const author = spellAuthor(match, context);
   const material = bestBy(author);
 
   if (material) {
@@ -34,40 +45,24 @@ function getMostPopularByAuthor(msg, matches) {
 
 }
 
-
-function match(msg) {
-  const regex = /.* af (.*)/;
-  const matches = msg.match(regex);
-  if (matches) {
-    return matches[1];
-  }
-
-  return false;
-
-}
-
-async function getAuthor(msg, matches) {
-  const suggestions = spell(matches[1]);
-  const author = suggestions[0] || matches[1];
+async function getAuthor(msg, match, context) {
+  console.log(match, 'getAuthor');
+  const author = spellAuthor(match, context);
+  console.log(author, 'getAuthor');
   const titles = await getTitlesForAuthor(author);
   return `${author} har f.eks. skrevet:<br />${titles.join('<br/>')}`;
 }
 
-function spellAuthor(msg, matches) {
-  const suggestions = spell(matches[1], 'author', 0.9);
-  const author = suggestions[0] || matches[1];
-  return author;
-}
 
-async function getNewestTitleForAuthor(msg, matches) {
-  const suggestions = spell(matches[1]);
-  const author = suggestions[0] || matches[1];
+async function getNewestTitleForAuthor(msg, match, context) {
+  const author = spellAuthor(match, context);
   const titles = await getTitlesForAuthor(author);
   return `${author}s nyeste bog hedder <b>${titles[0]}</b>`;
 }
 
-function getAuthorForTitle(msg, matches) {
-  const {author, title} = authorForTitle(matches[1]);
+function getAuthorForTitle(msg, match, context) {
+  const {author, title} = authorForTitle(match);
+  context.author = author;
   return `${author} har skrevet ${title}`;
 }
 
@@ -75,22 +70,29 @@ function noMatch(msg) {
   return `Beklager. Hvad mener du med <b>${msg}</b>?`;
 }
 
-async function recommendBook() {
+async function recommendBook(msg, match, context) {
   const recommend = await openPlatform.popRecommend();
-  console.log(recommend);
   const item = recommend.data[_.random(recommend.data.length -1)];
-
+  context.author = item.creator;
   return `<b>${item.title}</b> af <i>${item.creator}</i> er en god bog`
 }
 
+function applyContext (match, context) {
+  if (context.author && match.match(/^(han|hun|hende)$/)) {
+    return context.author;
+  }
+  return match;
+}
 
-export default function callRules(msg) {
+export default function callRules(msg, context) {
   for (const rule of rules) {
     for (const regex of rule.regex) {
       const matches = msg.toLowerCase().match(regex);
       if (matches) {
         console.log(rule);
-        return rule.action(msg, matches);
+        const match = applyContext(matches[rule.match || 1], context);
+        console.log(match);
+        return rule.action(msg, match, context);
       }
     }
   }
@@ -98,7 +100,12 @@ export default function callRules(msg) {
 
 const rules = [
   {
-    regex: [/.*den bedste .* af (.*)/],
+    regex: [/.*har (han|hun) (ellers|mere|også).*/],
+    action: getAuthor,
+    description: 'Mest udlånte bog af forfatter',
+  },
+  {
+    regex: [/.*den bedste .* af (.*)/, /hvad er (.*)s bedste.*/, /(.*)s bedste.*/],
     action: getMostPopularByAuthor,
     description: 'Mest udlånte bog af forfatter',
   },
@@ -119,11 +126,11 @@ const rules = [
   },
   {
     regex: [/stav til (.*)/, /stav (.*)/],
-    action: spellAuthor,
+    action: howToSpellAuthor,
     description: 'Stavehjælp',
   },
   {
-    regex: [/.*god bog.*/],
+    regex: [/.*(god bog).*/],
     action: recommendBook,
     description: 'Anbefaling',
   },
@@ -133,7 +140,7 @@ const rules = [
     description: 'Være hjælpsom',
   },
   {
-    regex: [/.*vad hedder du.*/],
+    regex: [/.*vad (hedder) du.*/],
     action: (msg, matches) => `Jeg hedder Bibbi. Hvad hedder du?`,
     description: 'Høflig',
   },
@@ -144,7 +151,7 @@ const rules = [
   },
   {
     regex: [/(.*)/],
-    action: spellAuthor,
+    action: howToSpellAuthor,
     description: 'Og altmulig andet'
   }
 ];

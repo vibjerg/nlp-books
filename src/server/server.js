@@ -18,6 +18,7 @@ app.get('/', function(req, res){
 function startBot () {
 
   io.on('connection', async function(socket) {
+    const context = {};
     console.log("User '" + socket.id + "' has connected.\n");
     socket.emit('chat message', {text:'Velkommen til bibbot demoen\n'});
     socket.emit('chat message', {text:'<< Hej, hvad kan jeg hjælpe med?\n'});
@@ -25,7 +26,7 @@ function startBot () {
     socket.on('chat message', async function(msg){
       // Emit the message back first
       socket.emit('chat message', { text: ">> " + msg });
-      const response = await rules(msg);
+      const response = await rules(msg, context);
       console.log(response, 'response');
       socket.emit('chat message', { text: "" + response});
       /*bot.reply(socket.id, msg.trim(), function(err, resObj){
