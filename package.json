@@ -19,6 +19,7 @@
     "dbc-node-basesoap-client": "^1.1.4",
     "express": "^4.14.0",
     "jsonfile": "^2.4.0",
+    "lodash": "^4.17.2",
     "mongoose": "^4.7.1",
     "natural": "^0.4.0",
     "nodemon": "^1.11.0",

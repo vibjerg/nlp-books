@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 import {spell, authorForTitle} from './spell';
 import bestBy from './best';
 import openPlatform from './openplatform.client';
@@ -73,11 +75,19 @@ function noMatch(msg) {
   return `Beklager. Hvad mener du med <b>${msg}</b>?`;
 }
 
+async function recommendBook() {
+  const recommend = await openPlatform.popRecommend();
+  console.log(recommend);
+  const item = recommend.data[_.random(recommend.data.length -1)];
+
+  return `<b>${item.title}</b> af <i>${item.creator}</i> er en god bog`
+}
+
 
 export default function callRules(msg) {
   for (const rule of rules) {
     for (const regex of rule.regex) {
-      const matches = msg.match(regex);
+      const matches = msg.toLowerCase().match(regex);
       if (matches) {
         console.log(rule);
         return rule.action(msg, matches);
@@ -100,7 +110,7 @@ const rules = [
   {
     regex: [/.* af (.*)/, /.* har (.*) lavet/, /.* har (.*) skrevet/],
     action: getAuthor,
-    description: 'Noget af en given forfatter',
+    description: 'Skrevet af en given forfatter',
   },
   {
     regex: [/.* har skrevet (.*)/, /.* hvem er (.*) lavet af/, /.* er (.*) skrevet/],
@@ -108,13 +118,33 @@ const rules = [
     description: 'Forfatteren til en bog',
   },
   {
-    regex: [/stav til (.*)/],
+    regex: [/stav til (.*)/, /stav (.*)/],
     action: spellAuthor,
     description: 'Stavehjælp',
   },
   {
+    regex: [/.*god bog.*/],
+    action: recommendBook,
+    description: 'Anbefaling',
+  },
+  {
+    regex: [/jeg hedder (.*)/],
+    action: (msg, matches) => `Hej ${matches[1]}. Hvad kan jeg hjælpe med?`,
+    description: 'Være hjælpsom',
+  },
+  {
+    regex: [/.*vad hedder du.*/],
+    action: (msg, matches) => `Jeg hedder Bibbi. Hvad hedder du?`,
+    description: 'Høflig',
+  },
+  {
+    regex: [/.*vad kan du.*/],
+    action: (msg, matches) => `Jeg kan fortælle om<br /> ${rules.map(r => r.description).join('<br />')}`,
+    description: 'Selvbevist',
+  },
+  {
     regex: [/(.*)/],
     action: spellAuthor,
-    description: 'Ingen match',
+    description: 'Og altmulig andet'
   }
 ];
