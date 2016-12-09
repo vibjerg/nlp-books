@@ -48,6 +48,14 @@ function getMostPopularByAuthor(msg, match, context) {
 async function getAuthor(msg, match, context) {
   console.log(match, 'getAuthor');
   const author = spellAuthor(match, context);
+  if (context.command == 'ti-fo') {
+    context.more = 10;
+  }
+  else {
+    context.command = 'ti-fo';
+    context.more = 0;
+  }
+
   console.log(author, 'getAuthor');
   const titles = await getTitlesForAuthor(author);
   return `${author} har f.eks. skrevet:<br />${titles.join('<br/>')}`;
@@ -61,9 +69,9 @@ async function getNewestTitleForAuthor(msg, match, context) {
 }
 
 function getAuthorForTitle(msg, match, context) {
-  const {author, title} = authorForTitle(match);
-  context.author = author;
-  return `${author} har skrevet ${title}`;
+  const {authors, title} = authorForTitle(match);
+  context.author = authors[0];
+  return `<i>${authors.join(' og ')}</i> har skrevet en bog med titlen <b>${title}</b>`;
 }
 
 function noMatch(msg) {

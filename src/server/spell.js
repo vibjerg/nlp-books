@@ -15,11 +15,11 @@ export function spell(input, type = 'author', treshhold = 0.90) {
 }
 
 export function authorForTitle(titleSug) {
-  const title = spell(titleSug, 'title')[0];
-
-  const id = data.titles[title];
-  console.log(title, id);
-  return {author: data.materials[id].creator, title};
+  const titles = spell(titleSug, 'title');
+  const title = titles[0];
+  const authors = data.titles[title];
+  console.log(authors);
+  return {authors, title};
 
 }
 //console.log(spellchecklist('poul auster', 0.90));

@@ -7,7 +7,10 @@ const titleList = [];
 const titles = {};
 for (const id in materials){
   const material = materials[id];
-  titles[material.title] = id;
+  if (!titles[material.title]) {
+    titles[material.title] = []
+  }
+  titles[material.title].push(material.creator);
   titleList.push(material.title);
   if (!authors[material.creator]) {
     authors[material.creator] = [];
