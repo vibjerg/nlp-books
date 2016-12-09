@@ -84,6 +84,21 @@ function applyContext (match, context) {
   return match;
 }
 
+function spellCheck(msg, match, context) {
+  const suggestions = spell(match, 'author', 0.9);
+  const author = suggestions[0] || null;
+  if (author) {
+    return `${author} er en forfatter`;
+  }
+  const titles = spell(match, 'title', 0.9);
+  const title = titles[0] || null;
+  if (title) {
+    return `${title} er en titel`;
+  }
+
+  return `Du giver ingen mening!!!`;
+}
+
 export default function callRules(msg, context) {
   for (const rule of rules) {
     for (const regex of rule.regex) {
@@ -99,6 +114,11 @@ export default function callRules(msg, context) {
 }
 
 const rules = [
+  {
+    regex: [/.*(film).*/],
+    action: () => `Jeg vil ikke noget om film. Jeg er en BOG BOT!!!!`,
+    description: 'Noget om bøger ikke om film',
+  },
   {
     regex: [/.*har (han|hun) (ellers|mere|også).*/],
     action: getAuthor,
@@ -151,7 +171,7 @@ const rules = [
   },
   {
     regex: [/(.*)/],
-    action: howToSpellAuthor,
+    action: spellCheck,
     description: 'Og altmulig andet'
   }
 ];
